@@ -1,0 +1,21 @@
+version: '3'
+services:
+  library-syncer-client:
+    container_name: library-syncer-client
+    restart: unless-stopped
+    image: ghcr.io/jbowdre/library-syncer-client:latest
+    environment:
+      - TZ=UTC
+      - SYNC_PEER=deb01.lab.bowdre.net
+      - SYNC_PORT=2222
+      - SYNC_SCHEDULE=0 21 * * 5
+      - SYNC_DELAY=true
+      - TLS_NAME=library.lab.bowdre.net
+      - TLS_CUSTOM_CERT=true
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+    volumes:
+      - './data/ssh:/syncer/.ssh'
+      - './data/library:/syncer/library'
+      - './data/certs:/etc/caddycerts'

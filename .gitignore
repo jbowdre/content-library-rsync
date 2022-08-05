@@ -1,0 +1,7 @@
+*.vmdk
+*.ovf
+*.mf
+*.json
+id_*
+authorized_keys
+*.pem

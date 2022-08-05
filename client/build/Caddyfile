@@ -1,0 +1,4 @@
+:80 {
+    root * /syncer/library
+    file_server 
+}

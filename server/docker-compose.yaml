@@ -1,0 +1,13 @@
+version: '3'
+services:
+  library-syncer-server:
+    container_name: library-syncer-server
+    restart: unless-stopped
+    image: ghcr.io/jbowdre/library-syncer-server:latest
+    environment:
+      - TZ=UTC
+    ports:
+      - "2222:22"
+    volumes:
+      - './data/ssh:/home/syncer/.ssh'
+      - './data/library:/syncer/library'
