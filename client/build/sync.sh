@@ -3,9 +3,9 @@
 set -e
 
 # initial sync is immediate, cron syncs have a random delay unless $CRON_DELAY==false
-if [ $1 != "now" ]; then
+if [ $1 == "delay" ]; then
     echo -e "\n[$(date +"%Y/%m/%d-%H:%M:%S")] Waiting for random delay..."
-    sleep $(( RANDOM ))
+    sleep $(( RANDOM % SYNC_DELAY_MAX_SECONDS + 1 ))
     echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Sync starts NOW!"
 else 
     echo -e "\n[$(date +"%Y/%m/%d-%H:%M:%S")] Immediate sync starts NOW!"

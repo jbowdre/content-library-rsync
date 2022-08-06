@@ -10,6 +10,7 @@ services:
       - SYNC_PORT=2222
       - SYNC_SCHEDULE=0 21 * * 5
       - SYNC_DELAY=true
+      - SYNC_DELAY_MAX_SECONDS=21600
       - TLS_NAME=library.lab.bowdre.net
       - TLS_CUSTOM_CERT=true
     ports:
