@@ -13,6 +13,7 @@ services:
       - SYNC_DELAY_MAX_SECONDS=21600
       - TLS_NAME=library.lab.bowdre.net
       - TLS_CUSTOM_CERT=true
+      - LIBRARY_NAME=Library
     ports:
       - "80:80/tcp"
       - "443:443/tcp"

@@ -7,9 +7,9 @@ echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Performing initial sync..."
 /syncer/sync.sh > /proc/self/fd/1 2>/proc/self/fd/2
 echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Creating cron job..."
 if [ "$SYNC_DELAY" == "true" ]; then
-    echo "$SYNC_SCHEDULE /syncer/sync.sh delay > /proc/self/fd/1 2>/proc/self/fd/2" >> $CRONTAB_FILE
+    echo "${SYNC_SCHEDULE:-0 21 * * 5} /syncer/sync.sh delay > /proc/self/fd/1 2>/proc/self/fd/2" >> $CRONTAB_FILE
 else
-    echo "$SYNC_SCHEDULE /syncer/sync.sh > /proc/self/fd/1 2>/proc/self/fd/2" >> $CRONTAB_FILE
+    echo "${SYNC_SCHEDULE:-0 21 * * 5} /syncer/sync.sh > /proc/self/fd/1 2>/proc/self/fd/2" >> $CRONTAB_FILE
 fi
 chmod 0644 $CRONTAB_FILE
 
