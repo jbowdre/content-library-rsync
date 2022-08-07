@@ -112,7 +112,20 @@ services:
 #### Execution
 Once everything is in place, start the server:
 ```shell
-docker-compose up -d
+; docker-compose up -d
+Creating network "server_default" with the default driver
+Pulling library-syncer-server (ghcr.io/jbowdre/library-syncer-server:latest)...
+latest: Pulling from jbowdre/library-syncer-server
+Digest: sha256:a149c7960693db8e8666330283f92948a81e692eefcbf950c4d72ace946b325c
+Status: Downloaded newer image for ghcr.io/jbowdre/library-syncer-server:latest
+Creating library-syncer-server ... done
+```
+
+After a few moments, verify that it is running successfully:
+```shell
+; docker ps
+CONTAINER ID   IMAGE                                          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
+89d14424a1b9   ghcr.io/jbowdre/library-syncer-server:latest   "/entrypoint.sh /usr…"   53 seconds ago   Up 52 seconds   0.0.0.0:2222->22/tcp, :::2222->22/tcp   library-syncer-server
 ```
 
 ### Client
@@ -182,5 +195,66 @@ services:
 #### Execution
 As before, just bring it up:
 ```shell
-docker-compose up -d
+; docker-compose up -d
+Creating network "client_default" with the default driver
+Pulling library-syncer-client (ghcr.io/jbowdre/library-syncer-client:latest)...
+latest: Pulling from jbowdre/library-syncer-client
+530afca65e2e: Already exists
+edb0ffa072a9: Already exists
+18ca3da84db3: Already exists
+590e61dd146f: Already exists
+ada635729e38: Already exists
+a141ea18b199: Pull complete
+4f86c976127e: Pull complete
+14769d09851e: Pull complete
+Digest: sha256:75415d182d4e3c1534a1668574ddc2eaf2d1d9d946ec3075972517ee9b19a1b9
+Status: Downloaded newer image for ghcr.io/jbowdre/library-syncer-client:latest
+Creating library-syncer-client ... done
+```
+
+```shell
+; docker ps
+CONTAINER ID   IMAGE                                          COMMAND                  CREATED          STATUS          PORTS                                                                      NAMES
+e3175d1e1f30   ghcr.io/jbowdre/library-syncer-client:latest   "/entrypoint.sh sh -…"   34 seconds ago   Up 34 seconds   0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp   library-syncer-client
+```
+
+Watch the logs to see how it's going:
+```shell
+; docker logs library-syncer-client
+[2022/08/07-02:53:23] Performing initial sync...
+[2022/08/07-02:53:23] Sync sync starts NOW!
+Warning: Permanently added '[deb01.lab.bowdre.net]:2222' (RSA) to the list of known hosts.
+receiving incremental file list
+./
+Harbor/
+Harbor/Harbor-disk1.vmdk
+Harbor/Harbor.mf
+Harbor/Harbor.ovf
+
+sent 104 bytes  received 940,320,236 bytes  144,664,667.69 bytes/sec
+total size is 940,090,405  speedup is 1.00
+[2022/08/07-02:53:29] Generating content library manifest...
+[2022/08/07-02:53:32] Sync tasks complete!
+[2022/08/07-02:53:32] Creating cron job...
+[2022/08/07-02:53:32] Starting caddy...
+{"level":"info","ts":1659840812.1830192,"msg":"using provided configuration","config_file":"/etc/caddy/Caddyfile","config_adapter":""}
+{"level":"warn","ts":1659840812.1841364,"msg":"Caddyfile input is not formatted; run the 'caddy fmt' command to fix inconsistencies","adapter":"caddyfile","file":"/etc/caddy/Caddyfile","line":2}
+{"level":"info","ts":1659840812.1854694,"logger":"admin","msg":"admin endpoint started","address":"tcp/localhost:2019","enforce_origin":false,"origins":["//localhost:2019","//[::1]:2019","//127.0.0.1:2019"]}
+{"level":"info","ts":1659840812.1858737,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0xc000502070"}
+{"level":"warn","ts":1659840812.186252,"logger":"tls","msg":"stapling OCSP","error":"no OCSP stapling for [library.lab.bowdre.net]: no OCSP server specified in certificate"}
+{"level":"info","ts":1659840812.1863828,"logger":"http","msg":"skipping automatic certificate management because one or more matching certificates are already loaded","domain":"library.lab.bowdre.net","server_name":"srv0"}
+{"level":"info","ts":1659840812.1863937,"logger":"http","msg":"enabling automatic HTTP->HTTPS redirects","server_name":"srv0"}
+{"level":"info","ts":1659840812.1868215,"logger":"tls","msg":"cleaning storage unit","description":"FileStorage:/root/.local/share/caddy"}
+{"level":"info","ts":1659840812.1868465,"logger":"tls","msg":"finished cleaning storage units"}
+{"level":"info","ts":1659840812.187277,"msg":"autosaved config (load with --resume flag)","file":"/root/.config/caddy/autosave.json"}
+{"level":"info","ts":1659840812.1872904,"msg":"serving initial configuration"}
+Successfully started Caddy (pid=26) - Caddy is running in the background
+[2022/08/07-02:53:32] Starting cron...
+```
+
+The startup tasks are complete once you see the messaging about starting `cron`. If you'd like, you can verify the sync schedule was created successfully:
+```shell
+; docker exec library-syncer-client crontab -l
+[...]
+0 21 * * 5 /syncer/sync.sh delay > /proc/self/fd/1 2>/proc/self/fd/2
 ```
