@@ -4,19 +4,16 @@ set -e
 
 # insert optional random delay
 if [ x$1 == x"delay" ]; then
-    echo -e "\n[$(date +"%Y/%m/%d-%H:%M:%S")] Waiting for random delay..."
+    echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Waiting for random delay..."
     sleep $(( RANDOM % SYNC_DELAY_MAX_SECONDS + 1 ))
-    echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Sync starts NOW!"
-else 
-    echo -e "\n[$(date +"%Y/%m/%d-%H:%M:%S")] Immediate sync starts NOW!"
 fi
 
+echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Sync sync starts NOW!"
 # sync
-echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Rsyncing content..."
 /usr/bin/rsync -e "ssh -l syncer -p $SYNC_PORT -i /syncer/.ssh/id_syncer -o StrictHostKeyChecking=no" -av --exclude '*.json' $SYNC_PEER:/ /syncer/library
 
 # generate content library manifest
 echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Generating content library manifest..."
 /usr/bin/python3 /syncer/update_library_manifests.py -n 'Library' -p /syncer/library/
 
-echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Sync tasks complete!\n"
+echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Sync tasks complete!"

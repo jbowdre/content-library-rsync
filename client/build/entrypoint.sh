@@ -3,9 +3,9 @@ set -e
 
 chmod 600 /syncer/.ssh/id_syncer
 
-echo -e "\n[$(date +"%Y/%m/%d-%H:%M:%S")] Performing initial sync..."
+echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Performing initial sync..."
 /syncer/sync.sh > /proc/self/fd/1 2>/proc/self/fd/2
-echo -e "\n[$(date +"%Y/%m/%d-%H:%M:%S")] Creating cron job..."
+echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Creating cron job..."
 if [ "$SYNC_DELAY" == "true" ]; then
     echo "$SYNC_SCHEDULE /syncer/sync.sh delay > /proc/self/fd/1 2>/proc/self/fd/2" >> $CRONTAB_FILE
 else
@@ -32,8 +32,8 @@ EOF
     fi
 fi
 
-echo -e "\n[$(date +"%Y/%m/%d-%H:%M:%S")] Starting caddy..."
+echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Starting caddy..."
 /usr/sbin/caddy start -config /etc/caddy/Caddyfile
 
-echo -e "\n[$(date +"%Y/%m/%d-%H:%M:%S")] Starting cron..."
+echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Starting cron..."
 exec "$@"
