@@ -16,7 +16,7 @@ chmod 0644 $CRONTAB_FILE
 if [ "$TLS_NAME" != "" ]; then
     if [ "$TLS_CUSTOM_CERT" == "true" ]; then
         cat << EOF > /etc/caddy/Caddyfile
-$TLS_FQDN {
+$TLS_NAME {
     root * /syncer/library
     file_server
     tls /etc/caddycerts/cert.pem /etc/caddycerts/key.pem
@@ -24,11 +24,11 @@ $TLS_FQDN {
 EOF
     else
         cat << EOF > /etc/caddy/Caddyfile
-$TLS_FQDN {
+$TLS_NAME {
     root * /syncer/library
     file_server
 }
-EOF 
+EOF
     fi
 fi
 
