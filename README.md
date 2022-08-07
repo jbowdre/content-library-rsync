@@ -152,15 +152,16 @@ Example folder structure:
 #### Configuration
 Some decisions need to be made on the client side, and most of those will be expressed in the form of environment variables passed into the container:
 
-| Variable | Example value | Description |
+| Variable | Example value (default)| Description |
 |:--- |:--- |:--- |
 | `SYNC_PEER` | `deb01.lab.bowdre.net` | FQDN or IP of the `library-syncer` server to which the client will connect |
-| `SYNC_PORT` | `2222` | SSH port for connecting to the server |
-| `SYNC_SCHEDULE` | `0 21 * * 5` | `cron`-formatted schedule for when the client should initiate a sync (example syncs at 9PM on Friday night) |
-| `SYNC_DELAY` | `true` | if true, sleeps a random number of seconds before begining the sync |
-| `SYNC_DELAY_MAX_SECONDS` | `21600` | maximum seconds to sleep (example will be delayed up to 6 hours) |
+| `SYNC_PORT` | (`2222`)| SSH port for connecting to the server |
+| `SYNC_SCHEDULE` | (`0 21 * * 5`) | `cron`-formatted schedule for when the client should initiate a sync (example syncs at 9PM on Friday night) |
+| `SYNC_DELAY` | `true` (`false`) | if true, sleeps a random number of seconds before begining the sync |
+| `SYNC_DELAY_MAX_SECONDS` | (`21600`) | maximum seconds to sleep (example will be delayed up to 6 hours) |
 | `TLS_NAME` | `library.bowdre.net` | if set, the FQDN used for the client's web server; if not set, the library will be served strictly over HTTP |
-| `TLS_CUSTOM_CERT` | `true` | if `true`, the web server will expect to find a custom certificate *and private key* in the `./data/certs` volume |
+| `TLS_CUSTOM_CERT` | `true` (`false`) | if `true`, the web server will expect to find a custom certificate *and private key* in the `./data/certs` volume |
+| `LIBRARY_NAME` | (`Library`) | this name will show up in the generated Content Library JSON, but not anywhere else |
 
 Introducing a random sync delay might be useful if you have a bunch of remote sites and don't want them to attempt to sync all at once, but you're too lazy to manually customize the schedule for each one of them (no judgment!).
 
@@ -183,6 +184,7 @@ services:
       - SYNC_DELAY_MAX_SECONDS=21600
       - TLS_NAME=library.lab.bowdre.net
       - TLS_CUSTOM_CERT=true
+      - LIBRARY_NAME=Library
     ports:
       - "80:80/tcp"
       - "443:443/tcp"
@@ -258,3 +260,27 @@ The startup tasks are complete once you see the messaging about starting `cron`.
 [...]
 0 21 * * 5 /syncer/sync.sh delay > /proc/self/fd/1 2>/proc/self/fd/2
 ```
+
+Open a web browser to `http(s)://[TLS_NAME or IP]/lib.json` and you can see the top-level library item:
+```json
+{
+  "vcspVersion": "2",
+  "version": "1",
+  "contentVersion": "1",
+  "name": "Library",
+  "id": "urn:uuid:aa465152-4ed2-44f5-8fb0-4fac5e03016a",
+  "created": "2022-08-07T20:14Z",
+  "capabilities": {
+    "transferIn": [
+      "httpGet"
+    ],
+    "transferOut": [
+      "httpGet"
+    ]
+  },
+  "itemsHref": "items.json"
+}
+```
+
+### Subscribed library
+The final piece of this puzzle to create a content library inside of vSphere subscribed to the client library that was just created.
