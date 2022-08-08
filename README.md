@@ -159,6 +159,7 @@ Some decisions need to be made on the client side, and most of those will be exp
 | `SYNC_SCHEDULE` | (`0 21 * * 5`) | `cron`-formatted schedule for when the client should initiate a sync (example syncs at 9PM on Friday night) |
 | `SYNC_DELAY` | `true` (`false`) | if true, sleeps a random number of seconds before begining the sync |
 | `SYNC_DELAY_MAX_SECONDS` | (`21600`) | maximum seconds to sleep (example will be delayed up to 6 hours) |
+| `SYNC_MAX_BW` | `1.5m` (`0`) | `rsync` bandwidth limit; `1.5m` caps at 1.5MB/s, `0` is unlimited | 
 | `TLS_NAME` | `library.bowdre.net` | if set, the FQDN used for the client's web server; if not set, the library will be served strictly over HTTP |
 | `TLS_CUSTOM_CERT` | `true` (`false`) | if `true`, the web server will expect to find a custom certificate *and private key* in the `./data/certs` volume |
 | `LIBRARY_NAME` | (`Library`) | this name will show up in the generated Content Library JSON, but not anywhere else |
@@ -183,6 +184,7 @@ services:
       - SYNC_SCHEDULE=0 21 * * 5
       - SYNC_DELAY=true
       - SYNC_DELAY_MAX_SECONDS=21600
+      - SYNC_MAX_KBPS=0
       - TLS_NAME=library.lab.bowdre.net
       - TLS_CUSTOM_CERT=true
       - LIBRARY_NAME=Library
