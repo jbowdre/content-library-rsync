@@ -32,6 +32,10 @@ EOF
     fi
 fi
 
+if [ "$LIBRARY_BROWSE" == "true" ]; then
+    sed -i 's/file_server/file_server browse/' /etc/caddy/Caddyfile
+fi
+
 echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Starting caddy..."
 /usr/sbin/caddy start -config /etc/caddy/Caddyfile
 

@@ -14,6 +14,7 @@ services:
       - TLS_NAME=library.lab.bowdre.net
       - TLS_CUSTOM_CERT=true
       - LIBRARY_NAME=Library
+      - LIBRARY_BROWSE=true
     ports:
       - "80:80/tcp"
       - "443:443/tcp"
