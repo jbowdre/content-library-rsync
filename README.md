@@ -162,6 +162,7 @@ Some decisions need to be made on the client side, and most of those will be exp
 | `TLS_NAME` | `library.bowdre.net` | if set, the FQDN used for the client's web server; if not set, the library will be served strictly over HTTP |
 | `TLS_CUSTOM_CERT` | `true` (`false`) | if `true`, the web server will expect to find a custom certificate *and private key* in the `./data/certs` volume |
 | `LIBRARY_NAME` | (`Library`) | this name will show up in the generated Content Library JSON, but not anywhere else |
+| `LIBRARY_BROWSE` | `true` (`false`) | enable directory browsing on the web server; otherwise you'll need to know the exact path of the item you're after |
 
 Introducing a random sync delay might be useful if you have a bunch of remote sites and don't want them to attempt to sync all at once, but you're too lazy to manually customize the schedule for each one of them (no judgment!).
 
@@ -185,6 +186,7 @@ services:
       - TLS_NAME=library.lab.bowdre.net
       - TLS_CUSTOM_CERT=true
       - LIBRARY_NAME=Library
+      - LIBRARY_BROWSE=true
     ports:
       - "80:80/tcp"
       - "443:443/tcp"
@@ -261,7 +263,7 @@ The startup tasks are complete once you see the messaging about starting `cron`.
 0 21 * * 5 /syncer/sync.sh delay > /proc/self/fd/1 2>/proc/self/fd/2
 ```
 
-Open a web browser to `http(s)://[TLS_NAME or IP]/lib.json` and you can see the top-level library item:
+Open a web browser to `http://$DOCKER_HOST_IP/lib.json`/`https://$TLS_NAME/lib.json` and you can see the top-level library item:
 ```json
 {
   "vcspVersion": "2",
@@ -282,5 +284,20 @@ Open a web browser to `http(s)://[TLS_NAME or IP]/lib.json` and you can see the 
 }
 ```
 
+Or hit the site root if `LIBRARY_BROWSE` is enabled:
+![Directory browsing](res/browse.png)
+
 ### Subscribed library
-The final piece of this puzzle to create a content library inside of vSphere subscribed to the client library that was just created.
+The final piece of this puzzle to create a content library inside of vSphere to subscribe to the `library-syncer-client` library. This will (finally) make those templates available to deploy directly in vSphere.
+
+1. Log into the vSphere Client and navigate to **Menu > Content Libraries**.
+2. Click **Create**, give your new library a good name, and click **Next**.
+3. Click the button to make this a **Subscribed Content Library**, and enter the URL of the `library-syncer-client` library. The URL should end with `/lib.json`. 
+![Library URL](res/library-url.png)
+4. Select the option to download content immediately. At this point, content will just be transferred within a local site so bandwidth shouldn't be a concern. Click **Next**.
+5. From this point, it's creating a library as usual. Click **Next** again unless you want to set a specific security policy, then select the datastore where the vSphere copy of the templates should be stored, then finally hit **Finish** to complete.
+
+You can then view the new library in vSphere and see that the template(s) have synced successfully:
+![Synced library](res/synced-library.png)
+
+Success!
