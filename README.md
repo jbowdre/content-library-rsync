@@ -67,7 +67,7 @@ openssl req -new \
 #### Preparation
 VM templates should be stored on the Docker host in its own folder under the `./data/library/` path. These should be in OVF format, _not_ OVA format, so that they can be made available in the vSphere inventory on the remote side. 
 
-(For extra credit, you can export the `./data/library/` path as an NFS share, mount that as a datastore in vSphere, and create a new local Content Library atop that. This would make it an easy target for a CI/CD pipeline to crank out new/updated templates on a regular schedule, and those would then be automatically available to the `library-syncer` clients without any additional effort. *Just a thought.*)
+(For extra credit, you can export the `./data/library/` path as an NFS share and mount that as a datastore in vSphere. This would make it an easy target for a CI/CD pipeline to crank out new/updated templates on a regular schedule, and those would then be automatically available to the `library-syncer` clients without any additional effort. *Just a thought.*)
 
 The server also needs the `id_syncer.pub` public key which was [generated earlier](#ssh-keypair-for-rsync-user). Place it in the `./data/ssh/` folder.
 
