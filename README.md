@@ -60,12 +60,36 @@ ssh-keygen  -t rsa -b 4096 -N "" -f id_syncer
 ### TLS certificate pair (optional)
 By default, the client will publish its library over HTTP. If you set the `TLS_NAME` environment variable to the server's publicly-accessible FQDN, the Caddy web server will [automatically retrieve and apply a certificate issued by Let's Encrypt](https://caddyserver.com/docs/automatic-https). For deployments on internal networks which need to use a certificate issued by an internal CA, you can set `TLS_CUSTOM_CERT=true` and add the private key and certificate to the clients - more on that in a minute.
 
-You can generate the cert signing request and key in one shot like this:
+You will need to be sure to generate a Certificate Signing Request which includes a Subject Alternative Name so that Chrome won't complain about the cert. Assuming that `nostnam
 ```shell
-openssl req -new \
--newkey rsa:4096 -nodes -keyout library.example.com.key \
--out library.example.com.csr \
--subj "/C=US/ST=Somestate/L=Somecity/O=Example.com/OU=LAB/CN=library.example.com"
+; openssl genrsa -out servername.example.com.key 4096
+; cat << EOF > csr.conf
+[ req ]
+default_bits = 4096
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
+
+[ req_distinguished_name ]
+C = Some Country
+ST = Some State
+L = Some City
+O = Some Org
+OU = Some Unit
+CN = servername.example.com
+
+[ v3_req ]
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = servername.example.com
+DNS.2 = servername
+DNS.3 = 192.168.1.55
+EOF
+
+; openssl req -new -out servername.example.com.csr -key servername.example.com.key -config csr.conf
 ```
 
 ## Usage
@@ -73,7 +97,7 @@ openssl req -new \
 #### Preparation
 VM templates should be stored on the Docker host in its own folder under the `./data/library/` path. These should be in OVF format, _not_ OVA format, so that they can be made available in the vSphere inventory on the remote side. 
 
-(For extra credit, you can export the `./data/library/` path as an NFS share and mount that as a datastore in vSphere. This would make it an easy target for a CI/CD pipeline to crank out new/updated templates on a regular schedule, and those would then be automatically available to the `library-syncer` clients without any additional effort. *Just a thought.*)
+(For extra credit, you can export the `./data/library/` path as an NFS share and mount that as a datastore in vSphere. This would make it an easy target for a CI/CD pipeline to crank out new/updated templates on a regular schedule, and those would then be automatically available to the `library-syncer` clients without any additional effort. If you do this, you'll want to set the NFS `anonuid` option in `/etc/exports` to match the `syncer` UID to control how the permissions get squashed. *Just a thought.*)
 
 The server also needs the `id_syncer.pub` public key which was [generated earlier](#ssh-keypair-for-rsync-user). Place it in the `./data/ssh/` folder.
 
@@ -96,7 +120,11 @@ Example folder structure:
 #### Configuration
 Strangely enough, the server side is a lot easier to configure than the client. The container just needs two volumes (one to hold the SSH key, and the other to hold the library content), and one network port on which to listen for incoming `rsync`-over-SSH connections from the clients. 
 
+By default, the `syncer` account will be created with UID `31337`. You can override this with `SYNCER_UID` if you need to match an existing permission set.
+
 You can change the port mapping if you'd like, just as long as it's not a port which will be used by the Docker host itself so that incoming connections can be tunneled into the container.
+
+Be sure to place `id_syncer.pub` in the `data/ssh` folder!
 
 Here's an example `docker-compose.yaml` for the server:
 ```yaml
@@ -108,6 +136,7 @@ services:
     image: ghcr.io/jbowdre/library-syncer-server:latest
     environment:
       - TZ=UTC
+      - SYNCER_UID=31337
     ports:
       - "2222:22"
     volumes:
@@ -118,20 +147,12 @@ services:
 #### Execution
 Once everything is in place, start the server:
 ```shell
-; docker-compose up -d
-Creating network "server_default" with the default driver
-Pulling library-syncer-server (ghcr.io/jbowdre/library-syncer-server:latest)...
-latest: Pulling from jbowdre/library-syncer-server
-Digest: sha256:a149c7960693db8e8666330283f92948a81e692eefcbf950c4d72ace946b325c
-Status: Downloaded newer image for ghcr.io/jbowdre/library-syncer-server:latest
-Creating library-syncer-server ... done
+docker-compose up -d
 ```
 
 After a few moments, verify that it is running successfully:
 ```shell
-; docker ps
-CONTAINER ID   IMAGE                                          COMMAND                  CREATED          STATUS          PORTS                                   NAMES
-89d14424a1b9   ghcr.io/jbowdre/library-syncer-server:latest   "/entrypoint.sh /usr…"   53 seconds ago   Up 52 seconds   0.0.0.0:2222->22/tcp, :::2222->22/tcp   library-syncer-server
+docker ps
 ```
 
 ### Client
@@ -160,6 +181,7 @@ Some decisions need to be made on the client side, and most of those will be exp
 
 | Variable | Example value (default)| Description |
 |:--- |:--- |:--- |
+| `TZ` | `America/Chicago` (`UTC`) | corresponding [TZ database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for the location to ensure sync schedule happens in local time |
 | `SYNC_PEER` | `deb01.lab.bowdre.net` | FQDN or IP of the `library-syncer` server to which the client will connect |
 | `SYNC_PORT` | (`2222`)| SSH port for connecting to the server |
 | `SYNC_SCHEDULE` | (`0 21 * * 5`) | `cron`-formatted schedule for when the client should initiate a sync (example syncs at 9PM on Friday night) |
@@ -184,7 +206,7 @@ services:
     restart: unless-stopped
     image: ghcr.io/jbowdre/library-syncer-client:latest
     environment:
-      - TZ=UTC
+      - TZ=America/Chicago
       - SYNC_PEER=deb01.lab.bowdre.net
       - SYNC_PORT=2222
       - SYNC_SCHEDULE=0 21 * * 5
@@ -207,27 +229,11 @@ services:
 #### Execution
 As before, just bring it up:
 ```shell
-; docker-compose up -d
-Creating network "client_default" with the default driver
-Pulling library-syncer-client (ghcr.io/jbowdre/library-syncer-client:latest)...
-latest: Pulling from jbowdre/library-syncer-client
-530afca65e2e: Already exists
-edb0ffa072a9: Already exists
-18ca3da84db3: Already exists
-590e61dd146f: Already exists
-ada635729e38: Already exists
-a141ea18b199: Pull complete
-4f86c976127e: Pull complete
-14769d09851e: Pull complete
-Digest: sha256:75415d182d4e3c1534a1668574ddc2eaf2d1d9d946ec3075972517ee9b19a1b9
-Status: Downloaded newer image for ghcr.io/jbowdre/library-syncer-client:latest
-Creating library-syncer-client ... done
+docker-compose up -d
 ```
 
 ```shell
-; docker ps
-CONTAINER ID   IMAGE                                          COMMAND                  CREATED          STATUS          PORTS                                                                      NAMES
-e3175d1e1f30   ghcr.io/jbowdre/library-syncer-client:latest   "/entrypoint.sh sh -…"   34 seconds ago   Up 34 seconds   0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp   library-syncer-client
+docker ps
 ```
 
 Watch the logs to see how it's going:
@@ -249,17 +255,7 @@ total size is 940,090,405  speedup is 1.00
 [2022/08/07-02:53:32] Sync tasks complete!
 [2022/08/07-02:53:32] Creating cron job...
 [2022/08/07-02:53:32] Starting caddy...
-{"level":"info","ts":1659840812.1830192,"msg":"using provided configuration","config_file":"/etc/caddy/Caddyfile","config_adapter":""}
-{"level":"warn","ts":1659840812.1841364,"msg":"Caddyfile input is not formatted; run the 'caddy fmt' command to fix inconsistencies","adapter":"caddyfile","file":"/etc/caddy/Caddyfile","line":2}
-{"level":"info","ts":1659840812.1854694,"logger":"admin","msg":"admin endpoint started","address":"tcp/localhost:2019","enforce_origin":false,"origins":["//localhost:2019","//[::1]:2019","//127.0.0.1:2019"]}
-{"level":"info","ts":1659840812.1858737,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0xc000502070"}
-{"level":"warn","ts":1659840812.186252,"logger":"tls","msg":"stapling OCSP","error":"no OCSP stapling for [library.lab.bowdre.net]: no OCSP server specified in certificate"}
-{"level":"info","ts":1659840812.1863828,"logger":"http","msg":"skipping automatic certificate management because one or more matching certificates are already loaded","domain":"library.lab.bowdre.net","server_name":"srv0"}
-{"level":"info","ts":1659840812.1863937,"logger":"http","msg":"enabling automatic HTTP->HTTPS redirects","server_name":"srv0"}
-{"level":"info","ts":1659840812.1868215,"logger":"tls","msg":"cleaning storage unit","description":"FileStorage:/root/.local/share/caddy"}
-{"level":"info","ts":1659840812.1868465,"logger":"tls","msg":"finished cleaning storage units"}
-{"level":"info","ts":1659840812.187277,"msg":"autosaved config (load with --resume flag)","file":"/root/.config/caddy/autosave.json"}
-{"level":"info","ts":1659840812.1872904,"msg":"serving initial configuration"}
+[...]
 Successfully started Caddy (pid=26) - Caddy is running in the background
 [2022/08/07-02:53:32] Starting cron...
 ```

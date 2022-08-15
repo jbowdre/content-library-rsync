@@ -10,10 +10,7 @@ RUN apk add --no-cache \
     rrsync \
     tzdata
 
-RUN mkdir /syncer \
-    && adduser -h /home/syncer -D -s /bin/sh syncer 
-USER syncer
-RUN mkdir -m 700 /home/syncer/.ssh
+RUN mkdir /syncer
 
 USER root
 COPY ./entrypoint.sh /

@@ -6,6 +6,7 @@ services:
     image: ghcr.io/jbowdre/library-syncer-server:latest
     environment:
       - TZ=UTC
+      - SYNCER_UID=31337
     ports:
       - "2222:22"
     volumes:

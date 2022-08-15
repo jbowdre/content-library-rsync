@@ -1,14 +1,21 @@
 #!/bin/sh
 set -e
 
-# set ssh config permissions
+# create user
+if [ ! $(id syncer) ]; then
+    adduser -u ${SYNCER_UID:-31337} -h /home/syncer -D -s /bin/sh syncer
+fi
 
+# set ssh config permissions
 echo "$SYNC_CMD $(cat /home/syncer/.ssh/id_syncer.pub)" > /home/syncer/.ssh/authorized_keys
-chown syncer:syncer /home/syncer/.ssh/authorized_keys && chmod 600 /home/syncer/.ssh/authorized_keys
+chown -R syncer:syncer /home/syncer \
+&& chmod 700 /home/syncer/.ssh \
+&& chmod 600 /home/syncer/.ssh/authorized_keys
 if [ $(getent shadow syncer | awk 'BEGIN { FS = ":" } ; { print $2 }') == '!' ]; then
     passwd -u syncer
 fi
 
+# generate host keys
 if [ ! -f "/etc/ssh/ssh_host_rsa_key" ]; then
     ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa
 fi
