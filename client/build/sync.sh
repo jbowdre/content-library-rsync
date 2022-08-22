@@ -10,7 +10,11 @@ fi
 
 echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Sync sync starts NOW!"
 # sync
-/usr/bin/rsync --bwlimit=${SYNC_MAX_BW:-0} -e "ssh -l syncer -p ${SYNC_PORT:-2222} -i /syncer/.ssh/id_syncer -o StrictHostKeyChecking=no" -av --exclude '*.json' $SYNC_PEER:/ /syncer/library
+/usr/bin/rsync --progress --bwlimit=${SYNC_MAX_BW:-0} -e "ssh -l syncer -p ${SYNC_PORT:-2222} -i /syncer/.ssh/id_syncer -o StrictHostKeyChecking=no" -avh --stats --exclude '*.json' --exclude '.vSphere-HA' $SYNC_PEER:/ /syncer/library --delete || [ $? -eq 23 ] && true
+
+# handle removed files / remove directories
+grep '"files": \[\]' /syncer/library/*/item.json -l | xargs rm -f $1
+find /syncer/library -type d -empty -delete
 
 # generate content library manifest
 echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Generating content library manifest..."
