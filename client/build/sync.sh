@@ -10,7 +10,7 @@ fi
 
 echo -e "[$(date +"%Y/%m/%d-%H:%M:%S")] Sync sync starts NOW!"
 # sync
-/usr/bin/rsync --progress --bwlimit=${SYNC_MAX_BW:-0} -e "ssh -l syncer -p ${SYNC_PORT:-2222} -i /syncer/.ssh/id_syncer -o StrictHostKeyChecking=no" -avh --stats --exclude '*.json' --exclude '.vSphere-HA' $SYNC_PEER:/ /syncer/library --delete || [ $? -eq 23 ] && true
+/usr/bin/rsync --progress --bwlimit=${SYNC_MAX_BW:-0} -e "ssh -l syncer -p ${SYNC_PORT:-2222} -i /syncer/.ssh/id_syncer -o StrictHostKeyChecking=no" -avh --stats --exclude '.vSphere-HA' $SYNC_PEER:/ /syncer/library --delete || [ $? -eq 23 ] && true
 
 # handle removed files / remove directories
 grep '"files": \[\]' /syncer/library/*/item.json -l | xargs rm -f $1
