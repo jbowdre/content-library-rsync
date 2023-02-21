@@ -1,6 +1,6 @@
 FROM alpine:3.16
 
-LABEL org.opencontainers.image.source="https://github.com/jbowdre/library-syncer"
+LABEL org.opencontainers.image.source="https://github.com/jbowdre/content-library-rsync"
 
 ENV CRONTAB_FILE=/var/spool/cron/crontabs/root
 
@@ -22,7 +22,7 @@ COPY ./entrypoint.sh /
 
 RUN chmod +x /entrypoint.sh \
     && chmod +x /syncer/sync.sh \
-    && rm -rf /tmp/* 
+    && rm -rf /tmp/*
 
 VOLUME ["/syncer/library", "/syncer/.ssh"]
 

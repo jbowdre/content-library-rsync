@@ -1,18 +1,18 @@
 version: '3'
 services:
   library-syncer-client:
-    container_name: library-syncer-client
+    container_name: clr-client
     restart: unless-stopped
-    image: ghcr.io/jbowdre/library-syncer-client:latest
+    image: ghcr.io/jbowdre/clr-client:latest
     environment:
       - TZ=UTC
-      - SYNC_PEER=deb01.lab.bowdre.net
+      - SYNC_PEER=clr-server.example.com
       - SYNC_PORT=2222
       - SYNC_SCHEDULE=0 21 * * 5
       - SYNC_DELAY=true
       - SYNC_DELAY_MAX_SECONDS=21600
       - SYNC_MAX_BW=0
-      - TLS_NAME=library.lab.bowdre.net
+      - TLS_NAME=library.example.com
       - TLS_CUSTOM_CERT=true
       - LIBRARY_NAME=Library
       - LIBRARY_BROWSE=true

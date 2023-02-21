@@ -1,9 +1,9 @@
 version: '3'
 services:
   library-syncer-server:
-    container_name: library-syncer-server
+    container_name: clr-server
     restart: unless-stopped
-    image: ghcr.io/jbowdre/library-syncer-server:latest
+    image: ghcr.io/jbowdre/clr-server:latest
     environment:
       - TZ=UTC
       - SYNCER_UID=31337

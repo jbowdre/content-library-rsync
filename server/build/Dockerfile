@@ -1,6 +1,6 @@
 FROM alpine:3.16
 
-LABEL org.opencontainers.image.source="https://github.com/jbowdre/library-syncer"
+LABEL org.opencontainers.image.source="https://github.com/jbowdre/content-library-rsync"
 
 ENV SYNC_CMD='command="/usr/bin/rrsync -ro /syncer/library/",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding'
 

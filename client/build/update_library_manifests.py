@@ -79,7 +79,7 @@ def _make_item(directory, vcsp_type, name, files, description="", properties={},
         item_id = "urn:uuid:%s" % identifier
     else:
         item_id = identifier
-    type_metadata = None 
+    type_metadata = None
     if vcsp_type == VCSP_TYPE_OVF:
         # generate sample type metadata for OVF template so that subscriber can show OVF VM type
         type_metadata_value = "{'id':'%s','version':'%s','libraryIdParent':'%s','isVappTemplate':'%s','vmTemplate':null,'vappTemplate':null,'networks':[],'storagePolicyGroups':null}" % (item_id, str(version), library_id, is_vapp_template)
@@ -114,7 +114,7 @@ def _make_item(directory, vcsp_type, name, files, description="", properties={},
             "properties": properties,
             "selfHref": "%s/%s" % (urllib.parse.quote(directory), urllib.parse.quote(ITEM_FILE)),
             "type": vcsp_type
-        } 
+        }
 
 
 def _make_items(items, version=1):
@@ -287,7 +287,7 @@ def usage():
     '''
     The usage message for the argument parser.
     '''
-    return """Usage: python update_library_manifests.py -n <library-name> -p <library-storage-path> --etag <true or false, default true> 
+    return """Usage: python update_library_manifests.py -n <library-name> -p <library-storage-path> --etag <true or false, default true>
                                               --skip-cert <true or fale, default true>
 
     """
